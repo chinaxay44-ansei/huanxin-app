@@ -2,5 +2,9 @@
   "version": 2,
   "builds": [
     { "src": "huanxin-app/package.json", "use": "@vercel/next" }
+  ],
+  "routes": [
+    { "src": "/_next/(.*)", "dest": "/huanxin-app/_next/$1" },
+    { "src": "/(.*)", "dest": "/huanxin-app/$1" }
   ]
 }
