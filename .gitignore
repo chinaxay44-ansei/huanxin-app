@@ -32,3 +32,5 @@ dev-server.out
 next-env.d.ts
 tmp/
 outputs/
+
+.vercel
