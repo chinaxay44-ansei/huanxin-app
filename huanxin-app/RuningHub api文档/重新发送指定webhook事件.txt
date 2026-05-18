@@ -1,0 +1,103 @@
+# 重新发送指定webhook事件
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /task/openapi/retryWebhook:
+    post:
+      summary: 重新发送指定webhook事件
+      deprecated: false
+      description: webhookId 为 获取webhook事件详情中返回的id
+      tags: []
+      parameters:
+        - name: Host
+          in: header
+          description: ''
+          required: true
+          example: www.runninghub.cn
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/components/schemas/%E9%87%8D%E6%96%B0%E5%8F%91%E9%80%81%E6%8C%87%E5%AE%9Awebhook%20Request
+              description: ''
+            example:
+              apiKey: '{{apiKey}}'
+              webhookId: '1904154698688159745'
+              webhookUrl: https://your-webhook-url
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/R%3F'
+              example:
+                code: 0
+                msg: ''
+                data: null
+          headers: {}
+          x-apifox-name: 成功
+      security: []
+      x-apifox-folder: ''
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/6103976/apis/api-276613259-run
+components:
+  schemas:
+    重新发送指定webhook Request:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          description: ''
+          examples:
+            - '{{apiKey}}'
+        webhookId:
+          type: string
+          examples:
+            - '1904154698688159745'
+        webhookUrl:
+          type: string
+          description: ''
+          examples:
+            - https://your-webhook-url
+      x-apifox-orders:
+        - apiKey
+        - webhookId
+        - webhookUrl
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    R?:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 返回标记：成功标记=0，非0失败，或者是功能码
+        msg:
+          type: string
+          description: 返回信息
+        data:
+          description: 数据
+          type: 'null'
+      x-apifox-orders:
+        - code
+        - msg
+        - data
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes: {}
+servers:
+  - url: https://www.runninghub.cn
+    description: runninghub.cn
+security: []
+
+```

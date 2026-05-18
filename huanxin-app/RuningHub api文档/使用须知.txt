@@ -1,0 +1,40 @@
+# 使用须知
+
+# 简介
+欢迎使用 RunningHub API，轻松调用 RunningHub 云端的 ComfyUI 工作流。
+通过 API，能够批量运行各类复杂工作流并连续发起运行任务。只要工作流能在 RunningHub 平台上正常运行，就能API化，就能将其无缝集成到您的产品中，或在任何需要 AI 工作流的场景中灵活应用。最重要的是，整个过程非常简单。
+
+# 开始使用
+在使用 RunningHub API之前，请做好如下准备：
+第一，先注册成为RunningHub网站的用户，开通基础会员权益。免费用户暂不能使用RunningHub API。
+第二，打开一个工作流，记录该流在地址栏中的workflow ID, 因为我们的API调用都是基于workflow ID的。
+比如下图这个地址( https://www.runninghub.cn/#/workflow/1850925505116598274 )的workflow ID就是1850925505116598274。注意这个流一定要手动运行成功过，否则API调用时会报错。
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/506967/image-preview" alt="image" width="500">
+
+# 获取API KEY
+RunningHub 为每位用户自动生成一个独特的 32 位 API KEY。
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/506968/image-preview" alt="image" width="300">
+
+打开https://www.runninghub.cn的首页，登录账号后，打开页面右上角的头像悬浮窗，进入API控制台看到您的API KEY。请妥善保存您的 API KEY，不要外泄，后续步骤将依赖此密钥进行操作。
+API KEY分为企业级和消费级（接口使用方式一致）
+- 企业级：使用共享API需要先进行账户充值，调用API会按照实际运行时间来消耗余额，具体资费详见网站资费说明；独占API请联系商务开通后使用；
+- 消费级：需要基础版及以上会员身份才能通过API KEY正常调用API，消费级API使用时会消耗您账户的RH币，消耗费率与在网站用运行工作流是一致的；
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/506969/image-preview" alt="image" width="300">
+
+# FAQ 常见问题
+- 怎么计费：
+消费级API并没有单独的计费体系，API运行一个流与在网页上运行同一个流价格是一致的。API只是启动执行流的方式不同，仅此而已。
+- 我想并发使用API，同时发起多个任务：
+1、购买多个账号，每个账号都会有一个API Key。 
+2、多个API Key可以使用同一个WorkflowID进行调用。 
+3、将多个API Key配置到一个调度资源池，从而实现并发。
+另外还有终极解决方案：购买企业级账号。
+- 如果一个流有多个save节点，API会怎么返回：
+会返回多个，放在data字段里以数组的形式返回。
+- 返回 APIKEY_INVALID_NODE_INFO：
+nodeInfoList中的输入项与工作流不匹配，逐项排查是否存在 nodeId、fieldName、fieldValue
+- 返回 APIKEY TASK STATUS ERROR：
+工作流本身运行过程中出错，都会统一返回这个ERROR。如想查看具体的报错信息可以在网页端打开“任务列表”，再找到对应的taskid,再点击“小红点”就可以查看到具体的错误堆栈信息
+- 图生图里的图片如何上传和定义：
+通过 /task/openapi/upload接口，把图片上传到RH的服务器，然后通过load image节占即可调用。具体使用方式，也可以参考这个项目的的实现
+https://github.com/HM-RunningHub/ComfyUI_RH_APICall

@@ -1,0 +1,109 @@
+# 获取webhook事件详情
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /task/openapi/getWebhookDetail:
+    post:
+      summary: 获取webhook事件详情
+      deprecated: false
+      description: 此接口旨在帮助调试用户的webhook，通过taskId查询到当前webhook事件的详细状态，拿到事件的id后可以发起重试
+      tags: []
+      parameters:
+        - name: Host
+          in: header
+          description: ''
+          required: true
+          example: www.runninghub.cn
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/components/schemas/%E8%8E%B7%E5%8F%96webhook%E4%BA%8B%E4%BB%B6%E8%AF%A6%E6%83%85Request
+              description: ''
+            example:
+              apiKey: '{{apiKey}}'
+              taskId: '1904154698679771137'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/R%3F'
+              example:
+                code: 0
+                msg: success
+                data:
+                  id: '1904444422778503169'
+                  userApiKey: '******************'
+                  taskId: '1904444422770114561'
+                  webhookUrl: https://your-webhook-url
+                  eventData: >-
+                    {"code":0,"msg":"success","data":[{"fileUrl":"https://rh-images.xiaoyaoyou.com/de0db6f2564c8697b07df55a77f07be9/output/ComfyUI_00059_hnona_1742889987.png","fileType":"png","taskCostTime":78,"nodeId":"9"}]}
+                  callbackStatus: FAILED
+                  callbackResponse: >-
+                    I/O error on POST request for "https://your-webhook-url":
+                    Remote host terminated the handshake
+                  retryCount: 3
+                  createTime: '2025-03-25T16:05:07'
+                  updateTime: '2025-03-25T16:08:10'
+          headers: {}
+          x-apifox-name: 成功
+      security: []
+      x-apifox-folder: ''
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/6103976/apis/api-276613258-run
+components:
+  schemas:
+    获取webhook事件详情Request:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          description: ''
+          examples:
+            - '{{apiKey}}'
+        taskId:
+          type: string
+          examples:
+            - '1904154698679771137'
+      x-apifox-orders:
+        - apiKey
+        - taskId
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    R?:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 返回标记：成功标记=0，非0失败，或者是功能码
+        msg:
+          type: string
+          description: 返回信息
+        data:
+          description: 数据
+          type: 'null'
+      x-apifox-orders:
+        - code
+        - msg
+        - data
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes: {}
+servers:
+  - url: https://www.runninghub.cn
+    description: runninghub.cn
+security: []
+
+```

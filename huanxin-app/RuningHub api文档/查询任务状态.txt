@@ -1,0 +1,122 @@
+# 查询任务状态
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /task/openapi/status:
+    post:
+      summary: 查询任务状态
+      deprecated: false
+      description: ''
+      tags: []
+      parameters:
+        - name: Host
+          in: header
+          description: ''
+          required: true
+          example: www.runninghub.cn
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: >-
+                #/components/schemas/%E6%9F%A5%E8%AF%A2%E4%BB%BB%E5%8A%A1%E7%8A%B6%E6%80%81%20Request
+              description: ''
+            example:
+              apiKey: '{{apiKey}}'
+              taskId: '1904152026220003329'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                x-apifox-refs:
+                  01JWFYNVYGDCC4TYVZQ04WA6R8:
+                    $ref: '#/components/schemas/RString'
+                    x-apifox-overrides:
+                      data: &ref_0
+                        type: string
+                        description: '["QUEUED","RUNNING","FAILED","SUCCESS"]'
+                    required: []
+                x-apifox-orders:
+                  - 01JWFYNVYGDCC4TYVZQ04WA6R8
+                properties:
+                  code:
+                    type: integer
+                    description: 返回标记：成功标记=0，非0失败，或者是功能码
+                  msg:
+                    type: string
+                    description: 返回信息
+                  data: *ref_0
+                x-apifox-ignore-properties:
+                  - code
+                  - msg
+                  - data
+              example:
+                code: 0
+                msg: ''
+                data: ''
+          headers: {}
+          x-apifox-name: 成功
+      security: []
+      x-apifox-folder: ''
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/6103976/apis/api-276613252-run
+components:
+  schemas:
+    查询任务状态 Request:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          description: ''
+          examples:
+            - '{{apiKey}}'
+        taskId:
+          type: string
+          description: ''
+          examples:
+            - '1904152026220003329'
+      x-apifox-orders:
+        - apiKey
+        - taskId
+      required:
+        - apiKey
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    RString:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 返回标记：成功标记=0，非0失败，或者是功能码
+        msg:
+          type: string
+          description: 返回信息
+        data:
+          type: string
+          description: 数据
+      x-apifox-orders:
+        - code
+        - msg
+        - data
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes: {}
+servers:
+  - url: https://www.runninghub.cn
+    description: runninghub.cn
+security: []
+
+```

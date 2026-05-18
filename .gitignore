@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+
+# build outputs
+.next/
+out/
+build/
+dist/
+
+# debug logs
+*.log
+*.err
+*.out
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+dev-server.err
+dev-server.out
+
+# env files
+.env
+.env.*
+!.env.example
+
+# deployment/local metadata
+.vercel/
+.codebuddy/
+.vscode/
+
+# generated/cache files
+*.tsbuildinfo
+next-env.d.ts
+tmp/
+outputs/

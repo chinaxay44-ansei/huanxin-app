@@ -1,0 +1,592 @@
+# 发起ComfyUI任务2-高级
+
+## OpenAPI Specification
+
+```yaml
+openapi: 3.0.1
+info:
+  title: ''
+  description: ''
+  version: 1.0.0
+paths:
+  /task/openapi/create:
+    post:
+      summary: 发起ComfyUI任务2-高级
+      deprecated: false
+      description: >
+        # 发起 ComfyUI 任务（高级）
+
+
+        该接口用于基于已有的工作流模板（workflow）自定义节点参数，发起 ComfyUI 图像生成任务。
+
+
+        适用于修改任意节点参数的场景，例如修改图生图中的采样器、步数、提示词、种子值等。  
+
+        通过传入 `nodeInfoList` 实现动态参数替换，使得任务运行灵活可控。
+
+
+        ---
+
+
+        ## 请求地址
+
+
+        ```
+
+        POST https://www.runninghub.cn/task/openapi/create
+
+        ```
+
+
+        ---
+
+
+        ## 请求方式
+
+
+        `POST`，请求体格式为 `application/json`
+
+
+        ---
+
+
+        ## 请求头部
+
+
+        | Header          | 是否必填 | 示例值                 |
+        说明                       |
+
+        |-----------------|----------|------------------------|----------------------------|
+
+        | `Host`          | 是       | `www.runninghub.cn`    | API 域名，必须精确填写    
+        |
+
+        | `Content-Type`  | 是       | `application/json`     |
+        请求体类型                 |
+
+
+        > ⚠️ 注意：某些 HTTP 客户端可能会自动添加 `Host` 头，但建议在接口测试或 SDK 实现时手动确认。
+
+
+        ---
+
+
+        ## 请求参数
+
+
+        ### 基础参数（必填）
+
+
+        | 参数名         | 类型     | 是否必填 | 说明 |
+
+        |----------------|----------|----------|------|
+
+        | `apiKey`       | string   | 是       | 用户的 API 密钥，用于身份认证 |
+
+        | `workflowId`   | string   | 是       | 工作流模板 ID，可通过平台导出获得 |
+
+        | `nodeInfoList` | array    | 否       | 节点参数修改列表，用于在执行前替换默认参数 |
+
+
+        #### nodeInfoList 结构说明
+
+
+        每项表示一个节点参数的修改：
+
+
+        | 字段         | 类型     | 说明 |
+
+        |--------------|----------|------|
+
+        | `nodeId`     | string   | 节点的唯一编号，来源于工作流 JSON 文件 |
+
+        | `fieldName`  | string   | 要修改的字段名，例如 `text`、`seed`、`steps` |
+
+        | `fieldValue` | any      | 替换后的新值，需与原字段类型一致 |
+
+
+        #### 示例请求体
+
+
+        ```json
+
+        {
+          "apiKey": "your-api-key",
+          "workflowId": "1904136902449209346",
+          "nodeInfoList": [
+            {
+              "nodeId": "6",
+              "fieldName": "text",
+              "fieldValue": "1 girl in classroom"
+            },
+            {
+              "nodeId": "3",
+              "fieldName": "seed",
+              "fieldValue": "1231231"
+            }
+          ]
+        }
+
+        ```
+
+
+        ---
+
+
+        ## 附加参数（可选）
+
+
+        | 参数名         | 类型     | 默认值 | 说明 |
+
+        |----------------|----------|--------|------|
+
+        | `addMetadata`  | boolean  | true   | 是否在图片中写入元信息（如提示词） |
+
+        | `webhookUrl`   | string   | 无     | 任务完成后回调的 URL，平台会主动向该地址发送任务结果 |
+
+        | `workflow`     | string   | 无     | 自定义完整工作流（JSON 字符串），如指定则忽略
+        `workflowId` |
+
+        | `instanceType`     | string   | 无     | 发起任务指定实例类型|
+
+        | `usePersonalQueue`     | boolean   | false     | 独占类型任务是否入队|
+
+
+        ---
+
+        ### usePersonalQueue 使用说明
+
+
+        此参数只对独占类型的apiKey生效，若不想自己控制排队，可设置此参数为true，任务会自动进入排队状态，当用户持有的独占机器空闲时会自动执行；
+
+        注意：单用户排队的数量限制为1000，超过会返回错误码(814, "PERSONAL_QUEUE_COUNT_LIMIT")
+
+
+        ```json
+
+        "usePersonalQueue": "true"
+
+        ```
+
+        ---
+
+        ### instanceType 使用说明
+
+
+        若希望发起plus任务到48G显存机器上执行，可设置 `instanceType` 参数。例如：
+
+
+        ```json
+
+        "instanceType": "plus"
+
+        ```
+
+        ---
+
+        ### webhookUrl 使用说明（高级）
+
+
+        若希望任务执行完成后平台自动通知结果，可设置 `webhookUrl` 参数。例如：
+
+
+        ```json
+
+        "webhookUrl": "https://your-webhook-url"
+
+        ```
+
+
+        > ⚠️ **推荐仅开发人员使用此参数**
+
+
+        任务完成后，RunningHub 会向该地址发送如下 `POST` 请求：
+
+
+        ```json
+
+        {
+          "event": "TASK_END",
+          "taskId": "1904163390028185602",
+          "eventData": "{\"code\":0,\"msg\":\"success\",\"data\":[{\"fileUrl\":\"https://rh-images.xiaoyaoyou.com/de0db6f2564c8697b07df55a77f07be9/output/ComfyUI_00033_hpgko_1742822929.png\",\"fileType\":\"png\",\"taskCostTime\":0,\"nodeId\":\"9\"}]}"
+        }
+
+        ```
+
+
+        - `event`：固定为 `TASK_END`
+
+        - `taskId`：对应任务 ID
+
+        - `eventData`：与“查询任务生成结果”接口返回结构一致
+
+
+        > ⚠️ **特别注意**：接收 webhook 回调的接口**必须异步处理**，否则平台请求超时可能会触发**多次重试**。
+
+
+        ---
+
+
+        ## 返回结果
+
+
+        ### 成功响应示例
+
+
+        ```json
+
+        {
+          "code": 0,
+          "msg": "success",
+          "data": {
+            "netWssUrl": null,
+            "taskId": "1910246754753896450",
+            "clientId": "e825290b08ca2015b8f62f0bbdb5f5f6",
+            "taskStatus": "QUEUED",
+            "promptTips": "{\"result\": true, \"error\": null, \"outputs_to_execute\": [\"9\"], \"node_errors\": {}}"
+          }
+        }
+
+        ```
+
+
+        ### 返回字段说明
+
+
+        | 字段名       | 类型     | 说明 |
+
+        |--------------|----------|------|
+
+        | `code`       | int      | 状态码，0 表示成功 |
+
+        | `msg`        | string   | 提示信息 |
+
+        | `data`       | object   | 返回数据对象，见下表 |
+
+
+        #### data 子字段说明
+
+
+        | 字段名        | 类型     | 说明 |
+
+        |---------------|----------|------|
+
+        | `taskId`      | string   | 创建的任务 ID，可用于查询状态或获取结果 |
+
+        | `taskStatus`  | string   | 初始状态，可能为：`QUEUED`、`RUNNING`、`FAILED` |
+
+        | `clientId`    | string   | 平台内部标识，用于排错，无需关注 |
+
+        | `netWssUrl`   | string   | WebSocket 地址（当前不稳定，**不推荐使用**） |
+
+        | `promptTips`  | string   | ComfyUI 校验信息（字符串格式的 JSON），可用于识别配置异常节点 |
+
+
+        ---
+
+
+        ## 使用建议
+
+
+        - ✅ 在调用前请确认 `nodeId` 和 `fieldName` 的准确性
+
+        - ✅ 可通过导出 workflow JSON 结构查看可配置字段
+
+        - ⚠️ 如果返回 `promptTips` 含有错误信息，请根据 `nodeId` 精确排查问题
+
+        - ✅ 推荐通过 `webhookUrl` 接收结果通知，或轮询状态与结果接口
+
+        - ❌ 不建议使用 `netWssUrl` 监听实时状态（当前版本不稳定）
+
+
+        ---
+
+
+        ## 相关接口
+
+
+        - [查询任务状态](https://www.runninghub.cn/runninghub-api-doc/api-276613252)
+
+        - [查询任务生成结果](https://www.runninghub.cn/runninghub-api-doc/api-276613253)
+
+        - [上传资源接口](https://www.runninghub.cn/runninghub-api-doc/api-276613256)
+
+        - [获取上传 Lora
+        链接接口](https://www.runninghub.cn/runninghub-api-doc/api-276613257)
+      tags: []
+      parameters:
+        - name: Host
+          in: header
+          description: ''
+          required: true
+          example: www.runninghub.cn
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              x-apifox-refs:
+                01K881CFTTMN34Z6S7HFAV9GCP:
+                  $ref: >-
+                    #/components/schemas/%E5%8F%91%E8%B5%B7ComfyUI%E4%BB%BB%E5%8A%A1%20Request%202
+                  x-apifox-overrides:
+                    workflow: &ref_0
+                      type: string
+                      description: 自定义完整工作流（JSON），在填写workflowId的时候要选择一个已经存在的workflowId
+                      examples:
+                        - >-
+                          {"3":{"class_type":"KSampler","inputs":{"scheduler":"karras","negative":["7",0],"denoise":1,"latent_image":["5",0],"seed":669816362794144,"cfg":8,"sampler_name":"dpmpp_2m","model":["4",0],"positive":["6",0],"steps":20},"_meta":{"title":"KSampler"}},"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"MR
+                          3DQ _SDXL V0.2.safetensors"},"_meta":{"title":"Load
+                          Checkpoint"}},"37":{"class_type":"VAEDecode","inputs":{"vae":["4",2],"samples":["3",0]},"_meta":{"title":"VAE
+                          Decode"}},"5":{"class_type":"EmptyLatentImage","inputs":{"batch_size":1,"width":512,"height":512},"_meta":{"title":"Empty
+                          Latent
+                          Image"}},"6":{"class_type":"CLIPTextEncode","inputs":{"speak_and_recognation":{"__value__":[false,true]},"text":"DreamWork
+                          3D Style, a cute panda holding a bamboo in hands at
+                          sunset, highly detailed, ultra-high resolutions, 32K
+                          UHD, best quality, masterpiece,
+                          ","clip":["4",1]},"_meta":{"title":"CLIP Text Encode
+                          (Prompt)"}},"7":{"class_type":"CLIPTextEncode","inputs":{"speak_and_recognation":{"__value__":[false,true]},"text":"","clip":["4",1]},"_meta":{"title":"CLIP
+                          Text Encode
+                          (Prompt)"}},"9":{"class_type":"SaveImage","inputs":{"filename_prefix":"ComfyUI","images":["37",0]},"_meta":{"title":"Save
+                          Image"}}}
+                  required: []
+              properties:
+                apiKey:
+                  type: string
+                  description: ''
+                  examples:
+                    - '{{apiKey}}'
+                workflowId:
+                  type: string
+                  examples:
+                    - '1904136902449209346'
+                nodeInfoList:
+                  type: array
+                  items: &ref_1
+                    $ref: >-
+                      #/components/schemas/%E8%8A%82%E7%82%B9%E8%BE%93%E5%85%A5%E4%BF%A1%E6%81%AF
+                  description: ''
+                addMetadata:
+                  type: boolean
+                  description: 是否在图片中写入元信息（如提示词）
+                  default: true
+                webhookUrl:
+                  type: string
+                  description: 任务完成回调的URL，平台会主动向该地址发送任务结果
+                workflow: *ref_0
+                instanceType:
+                  type: string
+                  description: 发起任务指定示例类型
+                usePersonalQueue:
+                  type: boolean
+                  default: false
+                  description: 独占类型任务是否入队
+              x-apifox-orders:
+                - 01K881CFTTMN34Z6S7HFAV9GCP
+              required:
+                - apiKey
+                - workflowId
+              x-apifox-ignore-properties:
+                - apiKey
+                - workflowId
+                - nodeInfoList
+                - addMetadata
+                - webhookUrl
+                - workflow
+                - instanceType
+                - usePersonalQueue
+            example:
+              apiKey: '{{apiKey}}'
+              workflowId: '1904136902449209346'
+              nodeInfoList:
+                - nodeId: '6'
+                  fieldName: text
+                  fieldValue: 1 girl in classroom
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: >-
+                  #/components/schemas/%E5%8F%91%E8%B5%B7ComfyUI%E4%BB%BB%E5%8A%A1%20Response
+                description: ''
+              examples:
+                '1':
+                  summary: 排队
+                  value:
+                    code: 0
+                    msg: success
+                    data:
+                      netWssUrl: null
+                      taskId: '1910246754753896450'
+                      clientId: e825290b08ca2015b8f62f0bbdb5f5f6
+                      taskStatus: QUEUED
+                      promptTips: >-
+                        {"result": true, "error": null, "outputs_to_execute":
+                        ["9"], "node_errors": {}}
+                '2':
+                  summary: 成功
+                  value:
+                    code: 0
+                    msg: success
+                    data:
+                      netWssUrl: websocket-url
+                      taskId: '1910246754753896450'
+                      clientId: e825290b08ca2015b8f62f0bbdb5f5f6
+                      taskStatus: RUNNING
+                      promptTips: >-
+                        {"result": true, "error": null, "outputs_to_execute":
+                        ["9"], "node_errors": {}}
+          headers: {}
+          x-apifox-name: 成功
+      security: []
+      x-apifox-folder: ''
+      x-apifox-status: released
+      x-run-in-apifox: https://app.apifox.com/web/project/6103976/apis/api-276613249-run
+components:
+  schemas:
+    节点输入信息:
+      type: object
+      properties:
+        nodeId:
+          type: string
+          description: ''
+          examples:
+            - '6'
+        fieldName:
+          type: string
+          description: ''
+          examples:
+            - text
+        fieldValue:
+          type: string
+          description: ''
+          examples:
+            - 1 girl in classroom
+      x-apifox-orders:
+        - nodeId
+        - fieldName
+        - fieldValue
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    发起ComfyUI任务 Request 2:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          description: ''
+          examples:
+            - '{{apiKey}}'
+        workflowId:
+          type: string
+          examples:
+            - '1904136902449209346'
+        nodeInfoList:
+          type: array
+          items: *ref_1
+          description: ''
+        addMetadata:
+          type: boolean
+          description: 是否在图片中写入元信息（如提示词）
+          default: true
+        webhookUrl:
+          type: string
+          description: 任务完成回调的URL，平台会主动向该地址发送任务结果
+        workflow:
+          type: string
+          description: 自定义完整工作流（JSON），如指定则忽略workflowId
+          examples:
+            - >-
+              {"3":{"class_type":"KSampler","inputs":{"scheduler":"karras","negative":["7",0],"denoise":1,"latent_image":["5",0],"seed":669816362794144,"cfg":8,"sampler_name":"dpmpp_2m","model":["4",0],"positive":["6",0],"steps":20},"_meta":{"title":"KSampler"}},"4":{"class_type":"CheckpointLoaderSimple","inputs":{"ckpt_name":"MR
+              3DQ _SDXL V0.2.safetensors"},"_meta":{"title":"Load
+              Checkpoint"}},"37":{"class_type":"VAEDecode","inputs":{"vae":["4",2],"samples":["3",0]},"_meta":{"title":"VAE
+              Decode"}},"5":{"class_type":"EmptyLatentImage","inputs":{"batch_size":1,"width":512,"height":512},"_meta":{"title":"Empty
+              Latent
+              Image"}},"6":{"class_type":"CLIPTextEncode","inputs":{"speak_and_recognation":{"__value__":[false,true]},"text":"DreamWork
+              3D Style, a cute panda holding a bamboo in hands at sunset, highly
+              detailed, ultra-high resolutions, 32K UHD, best quality,
+              masterpiece, ","clip":["4",1]},"_meta":{"title":"CLIP Text Encode
+              (Prompt)"}},"7":{"class_type":"CLIPTextEncode","inputs":{"speak_and_recognation":{"__value__":[false,true]},"text":"","clip":["4",1]},"_meta":{"title":"CLIP
+              Text Encode
+              (Prompt)"}},"9":{"class_type":"SaveImage","inputs":{"filename_prefix":"ComfyUI","images":["37",0]},"_meta":{"title":"Save
+              Image"}}}
+        instanceType:
+          type: string
+          description: 发起任务指定示例类型
+        usePersonalQueue:
+          type: boolean
+          default: false
+          description: 独占类型任务是否入队
+      x-apifox-orders:
+        - apiKey
+        - workflowId
+        - nodeInfoList
+        - addMetadata
+        - webhookUrl
+        - workflow
+        - instanceType
+        - usePersonalQueue
+      required:
+        - apiKey
+        - workflowId
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    发起ComfyUI任务 Response:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: 返回标记：成功标记=0，非0失败，或者是功能码
+          examples:
+            - 0
+        msg:
+          type: string
+          description: 返回信息
+          examples:
+            - success
+        data:
+          $ref: '#/components/schemas/TaskCreateResponse'
+          description: 数据
+      x-apifox-orders:
+        - code
+        - msg
+        - data
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+    TaskCreateResponse:
+      type: object
+      properties:
+        netWssUrl:
+          type: string
+          description: Wss服务地址
+        taskId:
+          type: integer
+          description: 任务Id
+          format: int64
+        clientId:
+          type: string
+          description: 客户端ID，当客户端首次接收clientId时，需要保存到本地，以便页面刷新重连或者二次运行任务传参使用
+        taskStatus:
+          type: string
+          description: '任务状态: CREATE, SUCCESS, FAILED, RUNNING, QUEUED;'
+        promptTips:
+          type: string
+          description: 工作流验证结果提示,当不为空是UI需要展示节点错误信息
+      x-apifox-orders:
+        - netWssUrl
+        - taskId
+        - clientId
+        - taskStatus
+        - promptTips
+      x-apifox-ignore-properties: []
+      x-apifox-folder: ''
+  securitySchemes: {}
+servers:
+  - url: https://www.runninghub.cn
+    description: runninghub.cn
+security: []
+
+```

@@ -1,0 +1,106 @@
+# 关于nodeInfoList
+
+# 什么是 nodeId，fieldName
+
+在工作流界面中，每个节点右上角都有一个数字，那就是 **nodeId**：
+
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/507189/image-preview" alt="image" width="500">
+
+在调用 API 发起 ComfyUI 任务之前，首先要熟悉工作流的 `api_format` 文件。可以点击 RunningHub 界面上方的下载图标并选择“导出工作流 API”，下载后打开的就是一个标准的 JSON 文件：
+
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/507191/image-preview" alt="image" width="300">
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/507193/image-preview" alt="image" width="300">
+
+每个 `nodeId` 都会对应有一个 `inputs`，`inputs` 中的 key 名称就是 **fieldName**。当我们在工作流中修改节点的值，本质上就是修改 `fieldName` 后面的值，也就是 `fieldValue`。
+
+例如，想修改“文生图”例子中的文本以及 KSampler 中的随机种子值，对应的就是 `nodeId` 为 `"6"` 和 `"3"`。在工作流文件中搜索 `"6"` 和 `"3"`：
+
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/507200/image-preview" alt="image" width="300">
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/507201/image-preview" alt="image" width="300">
+
+- 文本的 `fieldName` 就是 `"text"`  
+- 随机种子对应的 `fieldName` 是 `"seed"`
+
+因此，构造 `nodeInfoList` 如下：
+
+```json
+"nodeInfoList": [
+  {
+    "nodeId": "6",
+    "fieldName": "text",
+    "fieldValue": "1 girl in classroom"
+  },
+  {
+    "nodeId": "3",
+    "fieldName": "seed",
+    "fieldValue": "1231231"
+  }
+]
+```
+
+---
+
+# 关于文生图上传图片
+
+目前有两种方案：
+
+1. **自己维护图床**，使用 `LoadImageFromUrl` 节点。  
+   工作流执行到该节点时会去下载该图片：
+
+   <img src="https://api.apifox.com/api/v1/projects/6078593/resources/507215/image-preview" alt="image" width="500">
+   <img src="https://api.apifox.com/api/v1/projects/6078593/resources/507212/image-preview" alt="image" width="500">
+
+   构造 `nodeInfoList` 如下：
+
+   ```json
+   "nodeInfoList": [
+     {
+       "nodeId": "13",
+       "fieldName": "image",
+       "fieldValue": "https://rh-images.xiaoyaoyou.com/de0db6f2564c8697b07df55a77f07be9/output/ComfyUI_00038_sffft_1742964027.png?imageMogr2/format/jpeg/ignore-error/1"
+     }
+   ]
+   ```
+
+2. **使用上传资源接口**，上传图片后把返回的 `fileName` 传到 `LoadImage` 节点中：
+
+   ```json
+   {
+     "code": 0,
+     "msg": "success",
+     "data": {
+       "fileName": "api/9d77b8530f8b3591edc5c4e8f3f55b2cf0960bb2ca35c04e32c1677687866576.png",
+       "fileType": "image"
+     }
+   }
+   
+   "nodeInfoList": [
+     {
+       "nodeId": "14",
+       "fieldName": "image",
+       "fieldValue": "api/9d77b8530f8b3591edc5c4e8f3f55b2cf0960bb2ca35c04e32c1677687866576.png"
+     }
+   ]
+   ```
+
+---
+
+# 关于上传 Lora
+
+目前只有一种解决方案，分为三个步骤：
+
+1. 调用 **获取 Lora 上传链接** 接口。  
+2. 调用返回的 URL 上传 Lora 文件。  
+3. 在 `RHLoraLoader` 节点中使用该 Lora。
+
+<img src="https://api.apifox.com/api/v1/projects/6078593/resources/507228/image-preview" alt="image" width="300">
+
+---
+
+# 注意事项
+
+1. API 调用不会自动修改任何的 `seed` 值。同一个流、同样的输出只会生成同样的图，`seed` 值都需要手动生成一个随机值放入到 `nodeInfoList` 中。  
+2. 如果在 API 格式工作流中找不到某个 `fieldName`，就说明该 `fieldName` 是纯前端逻辑，在浏览器中才能生效。比如，KSampler 中的 `control_after_generate`，另外 `group` 相关的逻辑也无法在 API 中使用。  
+3. 在 API 格式工作流中，`fieldValue` 是 `[]` 包裹的一般代表连线，不建议进行修改。  
+
+---

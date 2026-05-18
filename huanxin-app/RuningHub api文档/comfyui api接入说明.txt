@@ -1,0 +1,94 @@
+我想做一款做换脸写真的软件，核心功能是调用comfyui工作流api实现的
+1、软件运作流程大概是：软件内会展示很多写真照片，用户点击做同款，就会让用户写提示词，然后把用户提示词、用户脸部照片（已提前录好过）、写真照片、写真配置参数、使用的工作流类型一起作为请求参数去请求api，请求api又用两种方式，一种是请求runninghub网站的api，一种是请求本地部署的机器的comfyui api，因为这两种处理方式各有优劣，所以会混合使用。所以调用方式需要后台可以配置更改。最后都会返回换脸写真，同时会保存生成时使用参数以便复用。然后用户可以发布写真到社区，其他用户可以以他为模版就继续换脸，就这样社区内容被用户无限生产。
+2、comfyui工作流大概有十几种，有负责换脸的、有负责修图的等等
+3、有些复杂功能需要工作流多步处理，比如先换脸，再高清修复，再添加文字，所以后台需要能管理功能的运作步骤，第一步用哪条工作流，返回的哪个参数作为第二个工作流的输入。
+
+以下是一套可扩展的开发思路，涵盖：
+- 🧩 系统整体架构逻辑（软件端 + 后端服务）
+- 🗄️ 数据库表设计（核心表结构与关系）
+- ⚙️ 管理后台设计思路（配置 + 控制 + 可视化）
+- 🚀 运行流程串联逻辑（工作流执行链）
+
+---
+🧩 一、系统整体架构逻辑
+客户端（App / Web）
+   ↓
+后端 API 服务（你的核心业务逻辑层）
+   ↓
+ComfyUI 调度层（可选本地 / RunningHub）
+   ↓
+任务队列（异步执行）
+   ↓
+结果存储（数据库 + 储存桶）
+核心思想
+所有的生成任务都抽象成一个「任务（Task）」；
+ 每个任务由一个或多个「工作流步骤（WorkflowStep）」组成；
+ 每个步骤对应一个「ComfyUI工作流模板」。
+
+---
+🗄️ 二、数据库表设计思路
+下面是核心表结构
+
+---
+1. 写真模板与工作流配置
+表名	字段	说明
+photo_template	id, name, preview_image_url, default_prompt, workflow_chain_id, tags	展示在前端的写真模板
+workflow_chain	id, name, description	工作流链定义（多步任务）
+workflow_step	id, chain_id, step_order, workflow_id, input_mapping_json, output_mapping_json	工作流链中每一步的定义（数据流映射）
+workflow	id, name, type, comfyui_api_type (local/runninghub), api_url, parameters_schema_json	单个 ComfyUI 工作流模板定义
+说明：
+- workflow_chain：描述一个“多步处理”的组合，比如「换脸→高清修复→加文字」。
+- workflow_step：描述链中每一步要用哪个工作流，以及如何把上一步输出作为输入。
+- workflow：是真实存在于 ComfyUI 系统的工作流模板（包括类型、接口地址、参数结构等）。
+
+---
+2. 任务执行与日志
+generation_task	id, user_id, template_id, chain_id, params_json, status, result_url, created_at	一次生成任务（例如“生成某张写真”）
+generation_step_log	id, task_id, step_id, status, input_json, output_json, started_at, ended_at	每一步的执行记录（方便追踪错误）
+api_config	id, name, type, base_url, api_key, weight, enabled	管理后台可配置调用哪个 ComfyUI 环境（本地或远程）
+---
+⚙️ 三、管理后台功能设计
+模块	功能点
+用户管理	用户资料、人脸图管理、封禁、数据统计
+模板管理	写真模板上传、标签管理、封面图配置、绑定工作流链
+工作流管理	ComfyUI工作流模板CRUD、查看参数结构、测试运行
+工作流链管理	可视化拖拽式定义多步工作流（类似流程图）
+任务监控	查看生成任务、进度、异常日志
+API配置	配置RunningHub / 本地 ComfyUI 节点、权重切换、健康检测
+内容审核	审核用户发布的写真作品
+---
+🚀 四、运行流程串联逻辑（实际执行时）
+以一个「换脸写真」为例：
+1. 用户选择模板 → 填写提示词。
+2. 前端发送请求到后端 /api/generate。
+3. 后端创建一条 generation_task（状态 = pending）。
+4. 读取模板绑定的 workflow_chain。
+5. 循环执行每个 workflow_step：
+  - 根据 workflow.api_type 选择调用 RunningHub 或本地 ComfyUI。
+  - 把用户图 + 写真图 + 参数传入。
+  - 收到结果图，写入 generation_step_log。
+  - 把输出结果传给下一步。
+6. 所有步骤完成后更新任务状态为 success。
+7. 返回结果给前端，并保存结果图到 OSS/CDN。
+8. 用户可选择发布到社区（photo_post 表）。
+
+---
+🔧 五、开发技巧建议
+- 任务队列：异步执行工作流链，避免阻塞。
+- API配置动态切换：可在后台给每个节点配置权重，自动负载。
+- 版本控制：工作流配置（JSON模板）要支持版本号（方便兼容旧生成任务）。
+
+---
+📘 六、举个完整数据流例子
+用户点击「做同款」模板ID=10
+↓
+后台查到：workflow_chain_id=3
+↓
+workflow_chain(3):
+   step1: workflow_id=5 (换脸)
+   step2: workflow_id=7 (修复)
+   step3: workflow_id=9 (加文字)
+↓
+每步执行时自动选择API节点（local / runninghub）
+↓
+最终生成 result_url → 写入数据库 → 返回前端

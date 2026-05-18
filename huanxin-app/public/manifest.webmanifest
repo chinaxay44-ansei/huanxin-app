@@ -1,0 +1,20 @@
+{
+  "name": "焕星 - 唤醒你的美",
+  "short_name": "焕星",
+  "description": "AI 视频社交与创作平台，支持一键生成与创意体验",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/桌面图标.png",
+      "sizes": "600x597",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
